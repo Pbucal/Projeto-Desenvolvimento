@@ -9,14 +9,14 @@
 
 typedef struct {
     char cpf[12];
-    char nome[50];   /* no arquivo, espacos viram '_' */
+    char nome[50];   
     char senha[7];
     double reais, btc, eth, xrp;
 } Usuario;
 
 Usuario usu[MAX_USU];
 int nUsu = 0;
-double cot[3];                              /* 0=BTC 1=ETH 2=XRP */
+double cot[3];                              
 const char *NOME[3] = {"BTC", "ETH", "XRP"};
 const double TX_COMPRA[3] = {0.02, 0.01, 0.01};
 const double TX_VENDA[3]  = {0.03, 0.02, 0.01};
@@ -121,7 +121,7 @@ void carregar(void) {
     }
 }
 
-/* linha de extrato, formato do enunciado */
+/* linha de extrato */
 void registrar(Usuario *u, char sinal, double valor, const char *moeda,
                double ct, double tx) {
     char nomeArq[40], data[32];
