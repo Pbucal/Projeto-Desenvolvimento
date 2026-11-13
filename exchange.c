@@ -9,14 +9,14 @@
 
 typedef struct {
     char cpf[12];
-    char nome[50];   
+    char nome[50];   /* no arquivo, espacos viram '_' */
     char senha[7];
     double reais, btc, eth, xrp;
 } Usuario;
 
 Usuario usu[MAX_USU];
 int nUsu = 0;
-double cot[3];                              
+double cot[3];                              /* 0=BTC 1=ETH 2=XRP */
 const char *NOME[3] = {"BTC", "ETH", "XRP"};
 const double TX_COMPRA[3] = {0.02, 0.01, 0.01};
 const double TX_VENDA[3]  = {0.03, 0.02, 0.01};
@@ -59,8 +59,9 @@ int lerInt(const char *msg) {
 }
 
 int senhaValida(const char *s) {
+    int i;
     if (strlen(s) != 6) return 0;
-    for (int i = 0; i < 6; i++)
+    for (i = 0; i < 6; i++)
         if (s[i] < '0' || s[i] > '9') return 0;
     return 1;
 }
@@ -68,9 +69,10 @@ int senhaValida(const char *s) {
 /* ---------- arquivos ---------- */
 
 void salvarUsuarios(void) {
+    int i;
     FILE *f = fopen(ARQ_USU, "w");
     if (!f) { printf("Erro ao salvar usuarios.\n"); return; }
-    for (int i = 0; i < nUsu; i++)
+    for (i = 0; i < nUsu; i++)
         fprintf(f, "%s %s %s %.8f %.8f %.8f %.8f\n", usu[i].cpf, usu[i].nome,
                 usu[i].senha, usu[i].reais, usu[i].btc, usu[i].eth, usu[i].xrp);
     fclose(f);
@@ -121,7 +123,7 @@ void carregar(void) {
     }
 }
 
-/* linha de extrato */
+/* linha de extrato, formato do enunciado */
 void registrar(Usuario *u, char sinal, double valor, const char *moeda,
                double ct, double tx) {
     char nomeArq[40], data[32];
@@ -139,8 +141,9 @@ void registrar(Usuario *u, char sinal, double valor, const char *moeda,
 
 void mostrarNome(Usuario *u) {
     char n[50];
+    int i;
     strcpy(n, u->nome);
-    for (int i = 0; n[i]; i++) if (n[i] == '_') n[i] = ' ';
+    for (i = 0; n[i]; i++) if (n[i] == '_') n[i] = ' ';
     printf("Nome: %s\n", n);
     printf("CPF: %.3s.%.3s.%.3s-%s\n", u->cpf, u->cpf + 3, u->cpf + 6, u->cpf + 9);
 }
@@ -234,7 +237,8 @@ void vender(Usuario *u) {
 }
 
 void atualizarCotacao(void) {
-    for (int i = 0; i < 3; i++) {
+    int i;
+    for (i = 0; i < 3; i++) {
         double var = ((double)rand() / RAND_MAX) * 0.10 - 0.05;  /* -5% a +5% */
         cot[i] *= 1 + var;
     }
@@ -246,13 +250,14 @@ void atualizarCotacao(void) {
 
 Usuario *login(void) {
     char cpf[32], senha[32];
-    for (int t = 0; t < 3; t++) {
+    int t, i;
+    for (t = 0; t < 3; t++) {
         printf("CPF (so numeros): ");
         lerLinha(cpf, sizeof cpf);
         printf("Senha (6 digitos): ");
         lerLinha(senha, sizeof senha);
         if (senhaValida(senha))
-            for (int i = 0; i < nUsu; i++)
+            for (i = 0; i < nUsu; i++)
                 if (!strcmp(usu[i].cpf, cpf) && !strcmp(usu[i].senha, senha))
                     return &usu[i];
         printf("CPF ou senha invalidos.\n");
