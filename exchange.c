@@ -21,7 +21,6 @@ const char *NOME[3] = {"BTC", "ETH", "XRP"};
 const double TX_COMPRA[3] = {0.02, 0.01, 0.01};
 const double TX_VENDA[3]  = {0.03, 0.02, 0.01};
 
-
 double *cripto(Usuario *u, int i) {
     if (i == 0) return &u->btc;
     if (i == 1) return &u->eth;
@@ -29,7 +28,7 @@ double *cripto(Usuario *u, int i) {
 }
 
 void lerLinha(char *buf, int tam) {
-    if (!fgets(buf, tam, stdin)) { buf[0] = '\0'; return; }
+    if (!fgets(buf, tam, stdin)) { printf("\nEntrada encerrada.\n"); exit(0); }
     buf[strcspn(buf, "\n")] = '\0';
 }
 
@@ -39,8 +38,9 @@ double lerDouble(const char *msg) {
     while (1) {
         printf("%s", msg);
         lerLinha(buf, sizeof buf);
+        for (fim = buf; *fim; fim++) if (*fim == ',') *fim = '.';
         v = strtod(buf, &fim);
-        if (fim != buf && *fim == '\0') return v;
+        if (fim != buf && *fim == '\0' && v > -1e12 && v < 1e12) return v;
         printf("Valor invalido.\n");
     }
 }
@@ -70,7 +70,7 @@ void salvarUsuarios(void) {
     FILE *f = fopen(ARQ_USU, "w");
     if (!f) { printf("Erro ao salvar usuarios.\n"); return; }
     for (i = 0; i < nUsu; i++)
-        fprintf(f, "%s %s %s %.8f %.8f %.8f %.8f\n", usu[i].cpf, usu[i].nome,
+        fprintf(f, "%s %s %s %.8f %.12f %.12f %.12f\n", usu[i].cpf, usu[i].nome,
                 usu[i].senha, usu[i].reais, usu[i].btc, usu[i].eth, usu[i].xrp);
     fclose(f);
 }
@@ -145,9 +145,9 @@ void mostrarNome(Usuario *u) {
 void mostrarSaldo(Usuario *u) {
     mostrarNome(u);
     printf("Reais: %.2f\n", u->reais);
-    printf("Bitcoin: %.4f\n", u->btc);
-    printf("Ethereum: %.4f\n", u->eth);
-    printf("Ripple: %.4f\n", u->xrp);
+    printf("Bitcoin: %.8f\n", u->btc);
+    printf("Ethereum: %.8f\n", u->eth);
+    printf("Ripple: %.8f\n", u->xrp);
 }
 
 int confirmarSenha(Usuario *u) {
@@ -186,8 +186,9 @@ void depositar(Usuario *u) {
 void sacar(Usuario *u) {
     double v = lerDouble("Valor do saque: ");
     if (v <= 0) { printf("Valor deve ser positivo.\n"); return; }
-    if (v > u->reais) { printf("Saldo insuficiente.\n"); return; }
+    if (v > u->reais + 1e-9) { printf("Saldo insuficiente.\n"); return; }
     u->reais -= v;
+    if (u->reais < 0) u->reais = 0;
     salvarUsuarios();
     registrar(u, '-', v, "REAL", 0.0, 0.0);
     mostrarSaldo(u);
@@ -202,11 +203,12 @@ void comprar(Usuario *u) {
     double v = lerDouble("Quanto gastar em reais (sem a taxa): ");
     if (v <= 0) { printf("Valor deve ser positivo.\n"); return; }
     double total = v * (1 + TX_COMPRA[i]);
-    if (total > u->reais) {
+    if (total > u->reais + 1e-9) {
         printf("Saldo insuficiente (necessario R$ %.2f com taxa).\n", total);
         return;
     }
     u->reais -= total;
+    if (u->reais < 0) u->reais = 0;
     *cripto(u, i) += v / cot[i];
     salvarUsuarios();
     registrar(u, '+', v, NOME[i], cot[i], TX_COMPRA[i]);
@@ -222,7 +224,8 @@ void vender(Usuario *u) {
     double v = lerDouble("Quanto vender em reais (antes da taxa): ");
     if (v <= 0) { printf("Valor deve ser positivo.\n"); return; }
     double qtd = v / cot[i];
-    if (qtd > *cripto(u, i)) { printf("Saldo de %s insuficiente.\n", NOME[i]); return; }
+    if (qtd > *cripto(u, i) + 1e-8) { printf("Saldo de %s insuficiente.\n", NOME[i]); return; }
+    if (qtd > *cripto(u, i)) qtd = *cripto(u, i);  
     *cripto(u, i) -= qtd;
     u->reais += v * (1 - TX_VENDA[i]);
     salvarUsuarios();
@@ -233,7 +236,7 @@ void vender(Usuario *u) {
 void atualizarCotacao(void) {
     int i;
     for (i = 0; i < 3; i++) {
-        double var = ((double)rand() / RAND_MAX) * 0.10 - 0.05;  
+        double var = ((double)rand() / RAND_MAX) * 0.10 - 0.05; 
         cot[i] *= 1 + var;
     }
     salvarCotacoes();
