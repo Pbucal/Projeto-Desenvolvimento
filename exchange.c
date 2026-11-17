@@ -9,19 +9,18 @@
 
 typedef struct {
     char cpf[12];
-    char nome[50];   /* no arquivo, espacos viram '_' */
+    char nome[50];   
     char senha[7];
     double reais, btc, eth, xrp;
 } Usuario;
 
 Usuario usu[MAX_USU];
 int nUsu = 0;
-double cot[3];                              /* 0=BTC 1=ETH 2=XRP */
+double cot[3];                              
 const char *NOME[3] = {"BTC", "ETH", "XRP"};
 const double TX_COMPRA[3] = {0.02, 0.01, 0.01};
 const double TX_VENDA[3]  = {0.03, 0.02, 0.01};
 
-/* ---------- utilidades ---------- */
 
 double *cripto(Usuario *u, int i) {
     if (i == 0) return &u->btc;
@@ -65,8 +64,6 @@ int senhaValida(const char *s) {
         if (s[i] < '0' || s[i] > '9') return 0;
     return 1;
 }
-
-/* ---------- arquivos ---------- */
 
 void salvarUsuarios(void) {
     int i;
@@ -123,7 +120,6 @@ void carregar(void) {
     }
 }
 
-/* linha de extrato, formato do enunciado */
 void registrar(Usuario *u, char sinal, double valor, const char *moeda,
                double ct, double tx) {
     char nomeArq[40], data[32];
@@ -136,8 +132,6 @@ void registrar(Usuario *u, char sinal, double valor, const char *moeda,
             data, sinal, valor, moeda, ct, tx, u->reais, u->btc, u->eth, u->xrp);
     fclose(f);
 }
-
-/* ---------- operacoes ---------- */
 
 void mostrarNome(Usuario *u) {
     char n[50];
@@ -239,14 +233,12 @@ void vender(Usuario *u) {
 void atualizarCotacao(void) {
     int i;
     for (i = 0; i < 3; i++) {
-        double var = ((double)rand() / RAND_MAX) * 0.10 - 0.05;  /* -5% a +5% */
+        double var = ((double)rand() / RAND_MAX) * 0.10 - 0.05;  
         cot[i] *= 1 + var;
     }
     salvarCotacoes();
     mostrarCotacoes();
 }
-
-/* ---------- login e menu ---------- */
 
 Usuario *login(void) {
     char cpf[32], senha[32];
